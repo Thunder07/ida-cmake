@@ -47,20 +47,20 @@ endif ()
 # We need to save our path here so we have it available in functions later on.
 set(ida_cmakelist_path ${CMAKE_CURRENT_LIST_DIR})
 
+if (IDA_EA_64)
+    set(ida_lib_path_ea "64")
+else ()
+    set(ida_lib_path_ea "32")
+endif ()
+
+if (IDA_BINARY_64)
+    set(ida_lib_path_binarch "x64")
+else ()
+    set(ida_lib_path_binarch "x86")
+endif ()
+
 # Library dependencies and include pathes
 if (WIN32)
-    if (IDA_EA_64)
-        set(ida_lib_path_ea "64")
-    else ()
-        set(ida_lib_path_ea "32")
-    endif ()
-
-    if (IDA_BINARY_64)
-        set(ida_lib_path_binarch "x64")
-    else ()
-        set(ida_lib_path_binarch "x64")
-    endif ()
-
     # On Windows, we use HR's lib files shipped with the SDK.
     set(IDA_LIB_DIR "${IDA_SDK}/lib/${ida_lib_path_binarch}_win_vc_${ida_lib_path_ea}"
         CACHE PATH "IDA SDK library path" FORCE)
@@ -83,11 +83,16 @@ elseif (UNIX)
         set(CMAKE_CXX_FLAGS "-m32" CACHE STRING "C++ compiler flags" FORCE)
     endif ()
 
-    # On unixoid platforms, we link against IDA directly.
+    if (APPLE)
+        set(IDA_LIB_DIR "${IDA_SDK}/lib/${ida_lib_path_binarch}_mac_gcc_${ida_lib_path_ea}" CACHE PATH "IDA SDK library path" FORCE)
+    elseif (UNIX)
+        set(IDA_LIB_DIR "${IDA_SDK}/lib/${ida_lib_path_binarch}_linux_gcc_${ida_lib_path_ea}" CACHE PATH "IDA SDK library path" FORCE)
+    endif()
+
     if (IDA_EA_64)
-        find_library(IDA_IDA_LIBRARY NAMES "ida64" PATHS ${IDA_INSTALL_DIR} REQUIRED)
+        find_library(IDA_IDA_LIBRARY NAMES "ida64" PATHS ${IDA_LIB_DIR} REQUIRED)
     else ()
-        find_library(IDA_IDA_LIBRARY NAMES "ida" PATHS ${IDA_INSTALL_DIR} REQUIRED)
+        find_library(IDA_IDA_LIBRARY NAMES "ida" PATHS ${IDA_LIB_DIR} REQUIRED)
     endif ()
     list(APPEND ida_libraries ${IDA_IDA_LIBRARY})
 endif ()
